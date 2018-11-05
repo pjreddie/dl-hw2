@@ -22,14 +22,14 @@ matrix mean(matrix x, int spatial)
 matrix variance(matrix x, matrix m, int spatial)
 {
     matrix v = make_matrix(1, x.cols/spatial);
-    // TODO: Calculate variance
+    // TODO: 7.1 - calculate variance
     return v;
 }
 
 matrix normalize(matrix x, matrix m, matrix v, int spatial)
 {
     matrix norm = make_matrix(x.rows, x.cols);
-    // TODO: normalize array, norm = (x - mean) / sqrt(variance + eps)
+    // TODO: 7.2 - normalize array, norm = (x - mean) / sqrt(variance + eps)
     return norm;
     
 }
@@ -65,14 +65,14 @@ matrix batch_normalize_forward(layer l, matrix x)
 matrix delta_mean(matrix d, matrix variance, int spatial)
 {
     matrix dm = make_matrix(1, variance.cols);
-    // TODO: calculate dL/dmean
+    // TODO: 7.3 - calculate dL/dmean
     return dm;
 }
 
 matrix delta_variance(matrix d, matrix x, matrix mean, matrix variance, int spatial)
 {
     matrix dv = make_matrix(1, variance.cols);
-    // TODO: calculate dL/dvariance
+    // TODO: 7.4 - calculate dL/dvariance
     return dv;
 }
 

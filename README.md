@@ -8,7 +8,75 @@ You'll have to copy over your answers from the previous assignment.
 
 ## 7. Batch Normalization ##
 
-The idea behind [batch normalization](https://arxiv.org/pdf/1502.03167.pdf) is simple: at every layer, before the bias and activation function, we'll normalize the layer output to have zero mean and unit variance. However, this simple technique provides huge benefits for model stability, convergence, and regularization.
+The idea behind [batch normalization](https://arxiv.org/pdf/1502.03167.pdf) is simple: at every layer, before the bias and activation function, we'll normalize the layer output so every neuron has zero mean and unit variance. However, this simple technique provides huge benefits for model stability, convergence, and regularization.
+
+### Batch Norm and Convolutions ###
+
+Batch normalization with fully connected layers is easy. You simply calculate the batch statistics for each neuron and then normalize. With our framework, every row is a different example in a batch and every column is a different neuron so we will calculate statistics for each column and then normalize so that every column has mean 0 and variance 1.
+
+With convolutional layers we are going to normalize the output of a filter over a batch of images. Each filter produces a single channel in the output of a convolutional layer. Thus for batch norm, we are normalizing across a batch of channels in the output. So, for example, we calculate the mean and variance for all the 1st channels across all the examples, all the 2nd channels across all the examples, etc. Another way of thinking about it is we are normalizing the output of a single filter, which gets applied both to all of the examples in a batch but also at numerous spatial locations for every image.
+
+Thus for our batch normalization functions we will be normalizing across rows but also across columns depending on the spatial component of a feature map. Check out `batch_norm.c`, I've already filled in the `mean` example for calculating the mean of a batch.
+
+The `spatial` parameter will tell you how many elements are in a spatial group (i.e. channel) of your output. So, if your convolutional layer outputs a `32 x 32 x 8` image and has a batch size of 128, the matrix `x` will have 128 rows and 8192 columns. We want to calculate a mean for every channel thus our matrix `m` will have 1 row and 8 columns (since there are 8 channels in the output). The images we are processing are `32 x 32` so the `spatial` parameter in this case will be the integer 1024. In a fully connected layer, the `spatial` parameter would always be 1 and we would calculate separate means for each neuron in the output.
+
+### Forward propagation ###
+
+![forward propagation equations](figs/bn_forward)
+
+### 7.1 `variance` ###
+
+Fill in the section to compute the variance of a feature map. As in the `mean` computation, we will compute variance for each filter. We need the previously computed `mean` for this computation so it is passed in as a parameter. Remember, variance is just the average squared difference of an element from the mean:
+
+![variance equation](https://wikimedia.org/api/rest_v1/media/math/render/svg/0c5c6e7bbd52e69c29e2d5cfe21989313aba55d4)
+
+Don't take the square root just yet, that would be standard deviation!
+
+### 7.2 `normalize` ###
+
+To normalize our output, we simply subtract the mean from every element and divide by the standard deviation (now you'll need a square root). When you're dividing by the standard deviation it can be wise to add in a small term (the epsilon in the batchnorm equations) to prevent dividing by zero. Especially if you are using RELUs, you may occassionally have a batch with 0 variance.
+
+### Understanding the forward pass ###
+
+`batch_normalize_forward` shows how we process the forward pass of batch normalization. Mostly we're doing what you'd expect, calculating mean and variance and normalizing with them:
+
+    matrix m = mean(x, spatial);
+    matrix v = variance(x, m, spatial);
+    
+    matrix x_norm = normalize(x, m, v, spatial);
+
+We are also keeping track of a rolling average of our mean and variance. During training or when processing large batches we can calculate means and variances but if we just want to process a single image it can be hard to get good statistics, we have to batch to norm against! Thus if we have a batch size of 1 we normalize using our rolling averages:
+
+    if (x.rows == 1){
+        return normalize(x, l.rolling_mean, l.rolling_variance, spatial);
+    }
+
+We assume the `l.rolling_mean` and `l.rolling_variance` matrices are initialized when the layer is created. Note that we use them to calculate the `spatial` size of the output.
+
+We also have the matrix pointer `l.x` which will keep track of the input to the batch norm process. We will need to remember this for the backward step!
+
+IMPORTANT: We need to initialize our rolling matrices and `l.x` when we create a convolutional or connected layer. In `make_connected_layer`, add the following lines before the return statement:
+
+    l.x = calloc(1, sizeof(matrix));
+    l.rolling_mean = make_matrix(1, outputs);
+    l.rolling_variance = make_matrix(1, outputs);
+
+Add similar lines in `make_convolutional_layer`, using the appropriate size for the rolling average matrices.
+
+While we're at it, let's add in the code to run batch normalization if it's enabled for a particular layer. We want to run batchnorm after the inputs have been multiplied by the weights of a layer but before the bias is added and before the activation function is computed. Each layer has the flag `l.batchnorm` that signals whether batch norm should be run for that layer. Add the following code in the appropriate spot in both the connected and convolutional layer code:
+
+    if(l.batchnorm){
+        matrix xnorm = batch_normalize_forward(l, out);
+        out = xnorm;
+    }
+
+### Backward propagation ###
+
+![](figs/bn_back.png)
+
+### 7.3 `delta_mean` ###
+
+
 
 
 ## PyTorch Section ##
