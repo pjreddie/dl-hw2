@@ -12,6 +12,7 @@ echo "Creating tarball..."
 prepare src/batch_norm.c
 prepare trycifar.py
 prepare homework2_colab.ipynb
+prepare homework2_python.pdf
 
 tar cvzf submit.tar.gz submit
 rm -rf submit/
