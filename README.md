@@ -104,6 +104,18 @@ Add this code to the backward processing of the connected and convolutional laye
 
 Think about where you added the forward code. Where should the backward processing step happen?
 
+### 7.6 Using your batchnorm ###
+
+Try out batchnorm! To add it to a layer, just make this simple change:
+
+    make_convolutional_layer(16, 16, 8, 16, 3, 1, LRELU), # No batch norm
+    make_convolutional_layer(16, 16, 8, 16, 3, 1, LRELU, 1), # Batch norm!
+    make_convolutional_layer(16, 16, 8, 16, 3, 1, LRELU, batchnorm=1), # Also batch norm!
+
+You should be able to add it to convolutional or connected layers. The standard for batch norm is to use it at every layer except the output. First, train the `conv_net` as usual. Then try it with batchnorm. Does it do better??
+
+In class we learned about annealing your learning rate to get better convergence. We ALSO learned that with batch normalization you can use larger learning rates because it's more stable. Increase the starting learning rate to `.1` and train for multiple rounds with successively smaller learning rates. Using just this model, what's the best performance you can get?
+
 ## PyTorch Section ##
 
 Upload `homework2_colab.ipynb` to Colab and train a neural language model.
