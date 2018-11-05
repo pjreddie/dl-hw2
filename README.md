@@ -22,7 +22,9 @@ The `spatial` parameter will tell you how many elements are in a spatial group (
 
 ### Forward propagation ###
 
-![forward propagation equations](figs/bn_forward)
+These are the forward propagation equations from the [original paper](https://arxiv.org/abs/1502.03167). Note, we'll just use `x̂` as the output, we'll skip the scaling factor for now and our layers already have a bias component that they will use on their own.
+
+![forward propagation equations](figs/bn_forward.png)
 
 ### 7.1 `variance` ###
 
@@ -72,12 +74,35 @@ While we're at it, let's add in the code to run batch normalization if it's enab
 
 ### Backward propagation ###
 
+The backward propagation step looks like this:
+
 ![](figs/bn_back.png)
+
+So to backward propagate we'll need to calculate these intermediate results, ∂l/∂µ and ∂l/∂σ². Then, using them, we can calculate ∂l/∂x̂. Note that the second summation in ∂l/∂µ evaluates to zero. Thus you can leave out the second term and just use the summation involving ∂l/∂x̂.
 
 ### 7.3 `delta_mean` ###
 
+Calculate ∂l/∂µ.
 
+### 7.4 `delta_variance` ###
 
+Calculate ∂l/∂σ².
+
+### 7.5 `delta_batch_norm` ###
+
+Using the intermediate results, calculate ∂l/∂x̂.
+
+### Add backward processing to your layers ###
+
+Add this code to the backward processing of the connected and convolutional layers:
+
+    if(l.batchnorm){
+        matrix dx = batch_normalize_backward(l, delta);
+        free_matrix(delta);
+        l.delta[0] = delta = dx;
+    }
+
+Think about where you added the forward code. Where should the backward processing step happen?
 
 ## PyTorch Section ##
 

@@ -80,7 +80,7 @@ matrix delta_batch_norm(matrix d, matrix dm, matrix dv, matrix mean, matrix vari
 {
     int i, j;
     matrix dx = make_matrix(d.rows, d.cols);
-    // TODO: calculate dL/dx
+    // TODO: 7.5 - calculate dL/dx
     return dx;
 }
 
