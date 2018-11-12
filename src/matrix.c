@@ -30,7 +30,7 @@ matrix random_matrix(int rows, int cols, float s)
     int i, j;
     for(i = 0; i < rows; ++i){
         for(j = 0; j < cols; ++j){
-            m.data[i*cols + j] = 2*s*(rand()%1000/1000.0) - s;    
+            m.data[i*cols + j] = 2*s*((float)rand()/RAND_MAX) - s;    
         }
     }
     return m;
