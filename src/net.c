@@ -63,3 +63,35 @@ void load_weights(net m, char *filename)
     }
     fclose(fp);
 }
+
+void write_matrix(matrix m, FILE *fp)
+{
+    fwrite(m.data, sizeof(float), m.rows*m.cols, fp);
+}
+
+void read_matrix(matrix m, FILE *fp)
+{
+     fread(m.data, sizeof(float), m.rows*m.cols, fp);
+}
+
+void save_matrix(matrix m, char *fname)
+{
+    FILE *fp = fopen(fname, "wb");
+    fwrite(&m.rows, sizeof(int), 1, fp);
+    fwrite(&m.cols, sizeof(int), 1, fp);
+    write_matrix(m, fp);
+    fclose(fp);
+}
+
+matrix load_matrix(char *fname)
+{
+    int rows = 0;
+    int cols = 0;
+    FILE *fp = fopen(fname, "rb");
+    fread(&rows, sizeof(int), 1, fp);
+    fread(&cols, sizeof(int), 1, fp);
+    matrix m = make_matrix(rows, cols);
+    read_matrix(m, fp);
+    return m;
+}
+
