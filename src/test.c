@@ -21,15 +21,9 @@ int within_eps(float a, float b){
 int same_matrix(matrix a, matrix b)
 {
     int i;
-    if(a.rows != b.rows || a.cols != b.cols) {
-        printf ("first matrix: %dx%d, second matrix:%dx%d\n", a.rows, a.cols, b.rows, b.cols);
-        return 0;
-    }
+    if(a.rows != b.rows || a.cols != b.cols) return 0;
     for(i = 0; i < a.rows*a.cols; ++i){
-        if(!within_eps(a.data[i], b.data[i])) {
-            printf("differs at %d, %f vs %f\n", i, a.data[i], b.data[i]);
-            return 0;
-        }
+        if(!within_eps(a.data[i], b.data[i])) return 0;
     }
     return 1;
 }
