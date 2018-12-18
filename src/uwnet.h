@@ -45,6 +45,15 @@ typedef struct layer {
 layer make_connected_layer(int inputs, int outputs, ACTIVATION activation);
 layer make_convolutional_layer(int w, int h, int c, int filters, int size, int stride, ACTIVATION activation);
 layer make_maxpool_layer(int w, int h, int c, int size, int stride);
+
+
+
+matrix mean(matrix x, int spatial);
+matrix variance(matrix x, matrix m, int spatial);
+matrix normalize(matrix x, matrix m, matrix v, int spatial);
+matrix delta_mean(matrix d, matrix variance, int spatial);
+matrix delta_variance(matrix d, matrix x, matrix mean, matrix variance, int spatial);
+matrix delta_batch_norm(matrix d, matrix dm, matrix dv, matrix mean, matrix variance, matrix x, int spatial);
 matrix batch_normalize_forward(layer l, matrix x);
 matrix batch_normalize_backward(layer l, matrix d);
 
@@ -73,6 +82,9 @@ void forward_bias(matrix m, matrix b);
 void backward_bias(matrix delta, matrix db);
 void activate_matrix(matrix m, ACTIVATION a);
 void gradient_matrix(matrix m, ACTIVATION a, matrix d);
+
+matrix im2col(image im, int size, int stride);
+void col2im(matrix col, int size, int stride, image im);
 
 #ifdef __cplusplus
 }
