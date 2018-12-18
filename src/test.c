@@ -21,9 +21,15 @@ int within_eps(float a, float b){
 int same_matrix(matrix a, matrix b)
 {
     int i;
-    if(a.rows != b.rows || a.cols != b.cols) return 0;
+    if(a.rows != b.rows || a.cols != b.cols) {
+        //printf ("first matrix: %dx%d, second matrix:%dx%d\n", a.rows, a.cols, b.rows, b.cols);
+        return 0;
+    }
     for(i = 0; i < a.rows*a.cols; ++i){
-        if(!within_eps(a.data[i], b.data[i])) return 0;
+        if(!within_eps(a.data[i], b.data[i])) {
+            //printf("differs at %d, %f vs %f\n", i, a.data[i], b.data[i]);
+            return 0;
+        }
     }
     return 1;
 }
@@ -412,13 +418,16 @@ void test_maxpool_layer_forward()
 
 void test_maxpool_layer_backward()
 {
+    matrix truth_max_out = load_matrix("data/test/max_out.matrix");
+    matrix truth_max_out3 = load_matrix("data/test/max_out3.matrix");
     image im = load_image("data/test/dog.jpg"); 
     matrix im_mat = {0};
     im_mat.rows = 1;
     im_mat.cols = im.w*im.h*im.c;
     im_mat.data = im.data;
     layer max_l = make_maxpool_layer(im.w, im.h, im.c, 2, 2);
-    max_l.forward(max_l, im_mat);
+    max_l.in[0] = im_mat;
+    max_l.out[0] = truth_max_out;
 
     matrix max_delta = load_matrix("data/test/max_delta.matrix");
     matrix prev_max_delta = make_matrix(im_mat.rows, im_mat.cols);
@@ -433,7 +442,8 @@ void test_maxpool_layer_backward()
     im_mat3.cols = im.w*im.h*im.c;
     im_mat3.data = im.data;
     layer max_l3 = make_maxpool_layer(im.w, im.h, im.c, 3, 2);
-    max_l3.forward(max_l3, im_mat3);
+    max_l3.in[0] = im_mat3;
+    max_l3.out[0] = truth_max_out3;
 
     matrix max_delta3 = load_matrix("data/test/max_delta3.matrix");
     matrix prev_max_delta3 = make_matrix(im_mat3.rows, im_mat3.cols);
