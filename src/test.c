@@ -21,9 +21,15 @@ int within_eps(float a, float b){
 int same_matrix(matrix a, matrix b)
 {
     int i;
-    if(a.rows != b.rows || a.cols != b.cols) return 0;
+    if(a.rows != b.rows || a.cols != b.cols) {
+        printf ("first matrix: %dx%d, second matrix:%dx%d\n", a.rows, a.cols, b.rows, b.cols);
+        return 0;
+    }
     for(i = 0; i < a.rows*a.cols; ++i){
-        if(!within_eps(a.data[i], b.data[i])) return 0;
+        if(!within_eps(a.data[i], b.data[i])) {
+            printf("differs at %d, %f vs %f\n", i, a.data[i], b.data[i]);
+            return 0;
+        }
     }
     return 1;
 }
@@ -342,9 +348,14 @@ void test_im2col()
     image im = load_image("data/test/dog.jpg"); 
     matrix col = im2col(im, 3, 2);
     matrix truth_col = load_matrix("data/test/im2col.matrix");
+    matrix col2 = im2col(im, 2, 2);
+    matrix truth_col2 = load_matrix("data/test/im2col2.matrix");
     TEST(same_matrix(truth_col,   col));
+    TEST(same_matrix(truth_col2,  col2));
     free_matrix(col);
+    free_matrix(col2);
     free_matrix(truth_col);
+    free_matrix(truth_col2);
     free_image(im);
 }
 
@@ -352,17 +363,30 @@ void test_col2im()
 {
     image im = load_image("data/test/dog.jpg"); 
     matrix dcol = load_matrix("data/test/dcol.matrix");
+    matrix dcol2 = load_matrix("data/test/dcol2.matrix");
     image col2im_res = make_image(im.w, im.h, im.c);
+    image col2im_res2 = make_image(im.w, im.h, im.c);
     col2im(dcol, 3, 2, col2im_res);
+    col2im(dcol2, 2, 2, col2im_res2);
+    matrix col2mat2 = {0};
+    col2mat2.rows = col2im_res2.c;
+    col2mat2.cols = col2im_res2.w*col2im_res2.h;
+    col2mat2.data = col2im_res2.data;
+
     matrix col2mat = {0};
     col2mat.rows = col2im_res.c;
     col2mat.cols = col2im_res.w*col2im_res.h;
     col2mat.data = col2im_res.data;
     matrix truth_col2mat = load_matrix("data/test/col2mat.matrix");
+    matrix truth_col2mat2 = load_matrix("data/test/col2mat2.matrix");
     TEST(same_matrix(truth_col2mat, col2mat));
+    TEST(same_matrix(truth_col2mat2, col2mat2));
     free_matrix(dcol);
     free_matrix(col2mat);
     free_matrix(truth_col2mat);
+    free_matrix(dcol2);
+    free_matrix(col2mat2);
+    free_matrix(truth_col2mat2);
     free_image(im);
 }
 
@@ -373,12 +397,22 @@ void test_maxpool_layer_forward()
     im_mat.rows = 1;
     im_mat.cols = im.w*im.h*im.c;
     im_mat.data = im.data;
+    matrix im_mat3 = {0};
+    im_mat3.rows = 1;
+    im_mat3.cols = im.w*im.h*im.c;
+    im_mat3.data = im.data;
     layer max_l = make_maxpool_layer(im.w, im.h, im.c, 2, 2);
     matrix max_out = max_l.forward(max_l, im_mat);
     matrix truth_max_out = load_matrix("data/test/max_out.matrix");
     TEST(same_matrix(truth_max_out, max_out));
+    layer max_l3 = make_maxpool_layer(im.w, im.h, im.c, 3, 2);
+    matrix max_out3 = max_l3.forward(max_l3, im_mat3);
+    matrix truth_max_out3 = load_matrix("data/test/max_out3.matrix");
+    TEST(same_matrix(truth_max_out3, max_out3));
     free_matrix(max_out);
     free_matrix(truth_max_out);
+    free_matrix(max_out3);
+    free_matrix(truth_max_out3);
     free_image(im);
 }
 
@@ -399,9 +433,27 @@ void test_maxpool_layer_backward()
     max_l.backward(max_l, prev_max_delta);
     matrix truth_prev_max_delta = load_matrix("data/test/prev_max_delta.matrix");
     TEST(same_matrix(truth_prev_max_delta, prev_max_delta));
+
+    matrix im_mat3 = {0};
+    im_mat3.rows = 1;
+    im_mat3.cols = im.w*im.h*im.c;
+    im_mat3.data = im.data;
+    layer max_l3 = make_maxpool_layer(im.w, im.h, im.c, 3, 2);
+    max_l3.forward(max_l3, im_mat3);
+
+    matrix max_delta3 = load_matrix("data/test/max_delta3.matrix");
+    matrix prev_max_delta3 = make_matrix(im_mat3.rows, im_mat3.cols);
+
+    *max_l3.delta = max_delta3;
+    max_l3.backward(max_l3, prev_max_delta3);
+    matrix truth_prev_max_delta3 = load_matrix("data/test/prev_max_delta3.matrix");
+    TEST(same_matrix(truth_prev_max_delta3, prev_max_delta3));
     free_matrix(max_delta);
     free_matrix(prev_max_delta);
     free_matrix(truth_prev_max_delta);
+    free_matrix(max_delta3);
+    free_matrix(prev_max_delta3);
+    free_matrix(truth_prev_max_delta3);
     free_image(im);
 }
 
@@ -490,7 +542,31 @@ void make_matrix_test()
 
     image im = load_image("data/test/dog.jpg"); 
     matrix col = im2col(im, 3, 2);
+    matrix col2 = im2col(im, 2, 2);
     save_matrix(col, "data/test/im2col.matrix");
+    save_matrix(col2, "data/test/im2col2.matrix");
+
+    matrix dcol = random_matrix(col.rows, col.cols, 10);
+    matrix dcol2 = random_matrix(col2.rows, col2.cols, 10);
+    image col2im_res = make_image(im.w, im.h, im.c);
+    image col2im_res2 = make_image(im.w, im.h, im.c);
+    col2im(dcol, 3, 2, col2im_res);
+    col2im(dcol2, 2, 2, col2im_res2);
+    save_matrix(dcol, "data/test/dcol.matrix");
+    save_matrix(dcol2, "data/test/dcol2.matrix");
+    matrix col2mat = {0};
+    col2mat.rows = col2im_res.c;
+    col2mat.cols = col2im_res.w*col2im_res.h;
+    col2mat.data = col2im_res.data;
+    save_matrix(col2mat, "data/test/col2mat.matrix");
+    matrix col2mat2 = {0};
+    col2mat2.rows = col2im_res2.c;
+    col2mat2.cols = col2im_res2.w*col2im_res2.h;
+    col2mat2.data = col2im_res2.data;
+    save_matrix(col2mat2, "data/test/col2mat2.matrix");
+
+
+    // Maxpool Layer Tests
 
     matrix im_mat = {0};
     im_mat.rows = 1;
@@ -508,17 +584,24 @@ void make_matrix_test()
     max_l.backward(max_l, prev_max_delta);
     save_matrix(prev_max_delta, "data/test/prev_max_delta.matrix");
 
-    matrix dcol = random_matrix(col.rows, col.cols, 10);
-    image col2im_res = make_image(im.w, im.h, im.c);
-    col2im(dcol, 3, 2, col2im_res);
-    save_matrix(dcol, "data/test/dcol.matrix");
-    matrix col2mat = {0};
-    col2mat.rows = col2im_res.c;
-    col2mat.cols = col2im_res.w*col2im_res.h;
-    col2mat.data = col2im_res.data;
-    save_matrix(col2mat, "data/test/col2mat.matrix");
+    matrix im_mat3 = {0};
+    im_mat3.rows = 1;
+    im_mat3.cols = im.w*im.h*im.c;
+    im_mat3.data = im.data;
+    layer max_l3 = make_maxpool_layer(im.w, im.h, im.c, 3, 2);
+    matrix max_out3 = max_l.forward(max_l3, im_mat3);
+    save_matrix(max_out3, "data/test/max_out3.matrix");
+
+    matrix max_delta3 = random_matrix(max_out3.rows, max_out3.cols, 10);
+    save_matrix(max_delta3, "data/test/max_delta3.matrix");
+
+    matrix prev_max_delta3 = make_matrix(im_mat3.rows, im_mat3.cols);
+    *max_l3.delta = max_delta3;
+    max_l.backward(max_l3, prev_max_delta3);
+    save_matrix(prev_max_delta3, "data/test/prev_max_delta3.matrix");
 
 
+    // Batchnorm Tests
 
     matrix mu_a   = mean(a, 1);
     matrix mu_a_s = mean(a, 8);
